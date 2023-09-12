@@ -1,0 +1,57 @@
+var pesoYmedida = "";
+    var lPartida = "";
+    var lCoditm = "";
+    var lUbicacion = "";
+    var timeoutId;
+    var etiquetasEscaneadas = [];  
+
+    $("#txtLTI").on("input", function () {
+        var numeroEtiqueta = $(this).val();
+        clearTimeout(timeoutId);
+
+        timeoutId = setTimeout(function () {
+            var numeroEtiqueta = $("#txtLTI").val();
+
+        if (etiquetasEscaneadas.includes(numeroEtiqueta)) {
+            toastr.error("La etiqueta ya ha sido escaneada.").css("width", "500px");
+                $("#txtLTI").val("");
+            return; 
+        }
+
+        var etiquetaRecienEscaneada = numeroEtiqueta;
+
+        $.ajax({
+            url: "/Produccion/_verificar_EtiquetasTelas",
+            method: "GET",
+            data: {
+                NroEtiqueta: numeroEtiqueta
+            },
+
+            success: function (result) {
+                if (Array.isArray(result) && result.length > 0) {
+                    var data = result[0];
+                    if (data) {
+                        lCoditm = data.coditm;
+                        lPartida = data.partida;
+                        lUbicacion = data.ubicacion;
+                        pesoYmedida = data.pesoMedida;
+                        etiquetasEscaneadas.push(etiquetaRecienEscaneada);
+                        agregarFilaTabla();
+
+                    } else {
+                        toastr.error("La etiqueta escaneada no existe o fue eliminada!.").css("width", "500px");
+                    }                       
+                }
+                else {
+                    toastr.error("La etiqueta escaneada no existe o fue eliminada!.").css("width", "500px");
+                    LimpiarModalLeer();
+                }
+            },
+            error: function (XMLHttpRequest, textStatus, errorThrown) {
+                $("#txtOP").val('');
+                $("#btnGenerar").prop('disabled', true);
+                toastr.error(textStatus + ' ' + errorThrown).css("width", "500px");
+            }
+        });
+        }, 1000);
+    });
