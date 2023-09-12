@@ -1,0 +1,55 @@
+var pesoYmedida = "";
+    var lPartida = "";
+    var lCoditm = "";
+    var lUbicacion = "";
+    var etiquetasEscaneadas = [];
+
+    $("#txtLTI").autocomplete({
+        source: function (request, response) {
+            var numeroEtiqueta = request.term;
+
+            if (etiquetasEscaneadas.includes(numeroEtiqueta)) {
+                toastr.error("La etiqueta ya ha sido escaneada.").css("width", "500px");
+                $("#txtLTI").val("");
+                return;
+            }
+
+            $.ajax({
+                url: "/Produccion/_verificar_EtiquetasTelas",
+                method: "GET",
+                data: {
+                    NroEtiqueta: numeroEtiqueta
+                },
+                success: function (result) {
+                    if (Array.isArray(result) && result.length > 0) {
+                        var data = result[0];
+                        if (data) {
+                            lCoditm = data.coditm;
+                            lPartida = data.partida;
+                            lUbicacion = data.ubicacion;
+                            pesoYmedida = data.pesoMedida;
+                            etiquetasEscaneadas.push(numeroEtiqueta);
+                            agregarFilaTabla();
+                        } else {
+                            toastr.error("La etiqueta escaneada no existe o fue eliminada!").css("width", "500px");
+                        }
+                    } else {
+                        toastr.error("La etiqueta escaneada no existe o fue eliminada!").css("width", "500px");
+                        $("#txtLTI").val('');
+                    }
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    $("#txtOP").val('');
+                    $("#btnGenerar").prop('disabled', true);
+                    toastr.error(textStatus + ' ' + errorThrown).css("width", "500px");
+                }
+            });
+        },
+        minLength: 15, 
+        autoFocus: true, 
+        select: function (event, ui) {
+            // Puedes realizar acciones adicionales cuando el usuario selecciona una sugerencia
+            var numeroEtiqueta = ui.item.value;
+            // Realiza acciones con la etiqueta seleccionada si es necesario
+        }
+    });
